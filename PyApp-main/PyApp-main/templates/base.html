@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Detect ingredients with AI and get Filipino recipe recommendations" />
+  <meta name="theme-color" content="#22c55e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Recipe AI" />
+  <title>{{ title or 'AI Recipe Assistant' }}</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f372.png">
+  <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f372.png">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+  <style>body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}</style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">🍳 AI Recipe Assistant</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#howItWorksModal">How it works</a></li>
+          <li class="nav-item"><a class="nav-link" href="#recipes">Recipes</a></li>
+          <li class="nav-item">
+            <button id="installBtn" class="btn btn-outline-success btn-sm" style="display: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16" style="margin-bottom: 2px;">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+              </svg>
+              Install Shortcut
+            </button>
+          </li>
+          <li class="nav-item">
+            <a href="#" id="downloadApkBtn" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#apkDownloadModal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16" style="margin-bottom: 2px;">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              Download APK
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="py-4 py-md-5">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="py-4 border-top bg-white">
+    <div class="container small text-muted d-flex justify-content-between">
+      <span>© {{ 2025 }} AI Recipe Assistant</span>
+      <span>Powered by Roboflow + Flask</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>window.APP_CONFIG = { detectUrl: '/detect' };</script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+  
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+    
+    // Install prompt for PWA
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install button
+      if (installBtn) {
+        installBtn.style.display = 'block';
+      }
+      console.log('App can be installed');
+    });
+
+    // Install button click handler
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          console.log('Install prompt not available');
+          return;
+        }
+        // Show install prompt
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        // Hide button after prompt
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    }
+
+    // Hide install button when app is already installed
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA installed successfully');
+      if (installBtn) {
+        installBtn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+
+    // Hide Download APK button when running as installed app (standalone mode)
+    const downloadApkBtn = document.getElementById('downloadApkBtn');
+    if (downloadApkBtn) {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+        || window.navigator.standalone 
+        || document.referrer.includes('android-app://');
+      
+      if (isStandalone) {
+        downloadApkBtn.style.display = 'none';
+      }
+    }
+  </script>
+
+  <!-- APK Download Modal -->
+  <div class="modal fade" id="apkDownloadModal" tabindex="-1" aria-labelledby="apkDownloadLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="apkDownloadLabel">📱 Download Android APK</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="mb-3">📥 Download for Android</h6>
+          <p>Install the AI Recipe Assistant app on your mobile device:</p>
+          <ol class="small">
+            <li>Click the download button below</li>
+            <li>Enable "Install from Unknown Sources" in Settings if prompted</li>
+            <li>Open the downloaded APK file</li>
+            <li>Follow the installation prompts</li>
+          </ol>
+          <hr>
+          <div class="alert alert-success mb-0">
+            <small>
+              <strong>✓ App Size:</strong> ~5 MB<br>
+              <strong>✓ Requirements:</strong> Android 5.0+
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="https://github.com/JustJas1103/PyApp/releases/download/v1.0/Recipe.AI.apk" class="btn btn-success btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Download APK
+          </a>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works Modal -->
+  <div class="modal fade" id="howItWorksModal" tabindex="-1" aria-labelledby="howItWorksLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="howItWorksLabel">How it works</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <h6>1) Capture or Upload</h6>
+              <p class="text-muted small mb-2">Use your camera (Start Camera → Capture) or upload a photo. We’ll analyze the image.</p>
+              <ul class="small mb-0">
+                <li>Good lighting and clear angles help detection.</li>
+                <li>Multiple items in one photo are okay.</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>2) AI Detection</h6>
+              <p class="text-muted small mb-2">Your photo is sent securely to Roboflow. We show boxes with labels and confidence.</p>
+              <ul class="small mb-0">
+                <li>Detections below an internal confidence cutoff are ignored.</li>
+                <li>Duplicates are removed automatically.</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>3) Stack Ingredients</h6>
+              <p class="text-muted small mb-2">Detected items are automatically added to <em>Your Ingredients</em>. Capture or upload more images to build a list.</p>
+              <ul class="small mb-0">
+                <li>Use <strong>Clear</strong> to reset your list.</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>4) Get Recommendations</h6>
+              <p class="text-muted small mb-2">We rank recipes by how well they match your ingredients.</p>
+              <ul class="small mb-0">
+                <li><span class="ingredient-tag ingredient-matched">Green tags</span> are ingredients you have.</li>
+                <li><span class="ingredient-tag ingredient-needed">Gray tags</span> are ingredients you need.</li>
+                <li>Click <strong>View Details</strong> to see instructions.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
